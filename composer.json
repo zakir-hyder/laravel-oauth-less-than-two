@@ -1,0 +1,51 @@
+{
+	"name": "laravel/laravel-oauth-less-than-two",
+	"description": "Implementation of oauth 1 and oauth 1.0a in Laravel",
+	"homepage": "http://blog.jambura.org/",
+	"keywords": ["framework", "laravel", "oauth 1","oauth 1.0a"],
+	"license": "MIT",
+	"authors": [
+        {
+            "name": "Zakir Hyder",
+            "email": "zakir.hyder@gmail.com",
+            "homepage": "https://github.com/zakir-hyder"
+        }
+    ],
+	"repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/zakir-hyder/oauth-1-lib"
+        }
+    ],  
+    "require": {
+		"laravel/framework": "4.1.*",
+		"guzzle/guzzle": "dev-master",
+		"zakirhyder/oauth-1-lib": "dev-master"
+	},
+	"autoload": {
+		"classmap": [
+			"app/commands",
+			"app/controllers",
+			"app/models",
+			"app/database/migrations",
+			"app/database/seeds",
+			"app/tests/TestCase.php"
+		]
+	},
+	"scripts": {
+		"post-install-cmd": [
+			"php artisan optimize"
+		],
+		"post-update-cmd": [
+			"php artisan clear-compiled",
+			"php artisan optimize"
+		],
+		"post-create-project-cmd": [
+			"php artisan key:generate"
+		]
+	},
+	"config": {
+		"preferred-install": "dist"
+	},
+	"minimum-stability": "dev"
+}
