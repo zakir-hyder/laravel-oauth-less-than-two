@@ -6,15 +6,16 @@ class TwitterProfileAccountsController extends \BaseController {
 	{
 		Session::forget('twitter_oauth_token');
 		Session::forget('twitter_oauth_token_secret');
+		Session::forget('twitter_request_token');
 
 		$redirect_url = URL::action('TwitterProfileAccountsController@getSaveTwitterProfile');
 		$request_token_url = "https://api.twitter.com/oauth/request_token";
-		$consumer_key  = Config::get('syndwire.twitter_client_id');
-		$consumer_secret = Config::get('syndwire.twitter_client_secret');
+		$consumer_key  = Config::get('credential.twitter_client_id');
+		$consumer_secret = Config::get('credential.twitter_client_secret');
 		$args = array(
 			'oauth_callback' =>$redirect_url
 		);
-
+		$err_msg = '';
 		$consumer = new OAuth\OAuthConsumer($consumer_key, $consumer_secret);
 		$request = OAuth\OAuthRequest::from_consumer_and_token($consumer, NULL,"GET", $request_token_url, $args);
 		$request->sign_request(new OAuth\OAuthSignatureMethodHMACSHA1(), $consumer, NULL);
@@ -29,10 +30,20 @@ class TwitterProfileAccountsController extends \BaseController {
 		try 
 		{
 			$response = $client->get()->send();
-		} catch (Guzzle\Http\Exception\BadResponseException $e) 
+		} catch (Guzzle\Http\Exception\BadResponseException $e) {
+			$err_msg = $e->getResponse();
+		}
+		catch (Guzzle\Http\Exception\CurlException $e) {
+			$err_msg = $e->getError();
+		}
+		catch (Exception $e) {
+			$err_msg = $e->getMessage();
+		}
+
+		if ($err_msg != '')
 		{
-			return Redirect::action('UsersController@getThirdParty')
-							->with('err_msg', 'Ooops! Something went wrong. Please check your account credentials and try adding your twitter account again. Also make sure your twitter account is verified.');
+			return Redirect::action('HomeController@showWelcome')
+				->with('err_msg', 'Ooops! Something went wrong. Error:' . $err_msg);
 		}
 
 		$response_body = $response->getBody();			
@@ -44,34 +55,17 @@ class TwitterProfileAccountsController extends \BaseController {
 			Session::put('twitter_oauth_token_secret', $request_token['oauth_token_secret']);
 			return Redirect::to("https://api.twitter.com/oauth/authorize?oauth_token={$request_token['oauth_token']}");
 		}
-		return Redirect::action('UsersController@getThirdParty')
-							->with('err_msg', 'Ooops! Something went wrong. Please check your account credentials and try adding your twitter account again. Also make sure your twitter account is verified.');
-	}
-
-	public function getEdit($id = null)
-	{
-		if($id)
-		{
-			$twitter_profile_account = Auth::user()->twitterProfileAccounts()
-				->where('id', '=', $id)
-				->first();
-			if($twitter_profile_account)
-			{
-				Session::put('twitter_profile_id', $id);
-				return Redirect::action('TwitterProfileAccountsController@getCreate');
-			}	
-		}
-		
-		return Redirect::action('UsersController@getThirdParty')
-							->with('err_msg', 'Ooops! Something went wrong. Please check your account credentials and try adding your twitter account again. Also make sure your twitter account is verified.');
+		return Redirect::action('HomeController@showWelcome')
+			->with('err_msg', 'Ooops! Something went wrong. Please check your account credentials and try adding your twitter account again.');
 	}
 
 	public function getSaveTwitterProfile()
 	{
-		if (Session::get('twitter_oauth_token') === Input::get('oauth_token')) {
+		if (Session::get('twitter_oauth_token') === Input::get('oauth_token')) 
+		{
 			$access_token_url = 'https://api.twitter.com/oauth/access_token';
-			$consumer_key  = Config::get('syndwire.twitter_client_id');
-			$consumer_secret = Config::get('syndwire.twitter_client_secret');
+			$consumer_key  = Config::get('credential.twitter_client_id');
+			$consumer_secret = Config::get('credential.twitter_client_secret');
 			$oauth_token  = Session::get('twitter_oauth_token');
 			$oauth_token_secret = Session::get('twitter_oauth_token_secret');
 			$args['oauth_verifier'] = Input::get('oauth_verifier');
@@ -99,75 +93,57 @@ class TwitterProfileAccountsController extends \BaseController {
 			$response_body = $response->getBody();
 			$request_token = OAuth\OAuthUtil::parse_parameters($response_body);
 
-			if(Session::get('twitter_profile_id'))
-			{
-				$twitter_profile_account = TwitterProfileAccount::where('id', '=', Session::get('twitter_profile_id'))->first();
-				Session::forget('twitter_profile_id');
-			}
-			else 
-			{
-				$twitter_profile_account = new TwitterProfileAccount;
-				$user = User::find(Auth::user()->id);
-				$user->number_networks =  $user->number_networks + 1;
-				$user->save();
-				$dashboard_history = new DashBoardHistory;
-				$dashboard_history->text = $request_token['screen_name'] . ' Twitter profile account added.';
-				$dashboard_history->network_status = 1;
-				$dashboard_history->user_id = Auth::user()->id;
-				$dashboard_history->save();
-			}
-			// $twitter_profile_account = TwitterProfileAccount::where('twitter_id', '=', $request_token['user_id'])->first();
-			// if (!$twitter_profile_account){
-			// 	$twitter_profile_account = new TwitterProfileAccount;
-			// } else {
-			// 	if ($twitter_profile_account->user_id != Auth::user()->id){
-			// 		return Redirect::action('UsersController@getThirdParty')
-			// 			->with('message', $request_token['screen_name'] . ' already signuped with other account.');
-			// 	}
-			// }
-			
-			$twitter_profile_account->user_id = Auth::user()->id;
-			$twitter_profile_account->twitter_id = $request_token['user_id'];
-			$twitter_profile_account->name = $request_token['screen_name'];
-			$twitter_profile_account->oauth_token = $request_token['oauth_token'];
-			$twitter_profile_account->oauth_token_secret = $request_token['oauth_token_secret'];
-			$twitter_profile_account->is_access_token_active = 1;
-			
-			$twitter_profile_account->save();
 			Session::forget('twitter_oauth_token');
 			Session::forget('twitter_oauth_token_secret');
-
-			return Redirect::to(URL::action('UsersController@getThirdParty') . "#twitterProfile")
-				->with('message', 'Twitter account added');
+			Session::put('twitter_request_token', $request_token);
+			return Redirect::action('TwitterProfileAccountsController@getTwit');
 		}
-
-		return Redirect::action('TwitterProfileAccountsController@getCreate');
+		return Redirect::action('HomeController@showWelcome')
+			->with('err_msg', 'Ooops! Something went wrong. Please check your account credentials and try adding your twitter account again.');
 	}
 
-	public function getDeleteTwitterProfile($id = null)
+	public function getTwit()
 	{
-		if ($id) {
-			$twitter_profile_account = TwitterProfileAccount::
-																		where('twitter_id', '=', $id)
-																		->where('user_id', '=', Auth::user()->id)
-																		->first();
-			if ($twitter_profile_account){	
-				$user = User::find(Auth::user()->id);
-				$user->number_networks = $user->number_networks - 1;
-				$user->number_networks = ($user->number_networks < 0) ? 0 : $user->number_networks;
-				$user->save();
-				$dashboard_history = new DashBoardHistory;
-				$dashboard_history->text = $twitter_profile_account->name . ' Twitter profile account deleted.';
-				$dashboard_history->user_id = Auth::user()->id;
-				$dashboard_history->network_status = 1;
-				$dashboard_history->save();		
-				$twitter_profile_account->delete();
-				return Redirect::action('UsersController@getThirdParty')
-						->with('message', $twitter_profile_account->name . ' Twitter profile account deleted.');
+		if (Session::has('twitter_request_token')) 
+		{
+			$err_msg = $response_data = "";
+			$post_url = 'https://api.twitter.com/1.1/statuses/update.json';
+			$consumer_key  = Config::get('credential.twitter_client_id');
+			$consumer_secret = Config::get('credential.twitter_client_secret');
+			$args['status'] = "#laravel #oauth #Guzzle https://github.com/zakir-hyder/laravel-oauth-less-than-two";
+			$request_token  = Session::get('twitter_request_token');
+
+			$consumer = new OAuth\OAuthConsumer($consumer_key, $consumer_secret);
+			$token = new OAuth\OAuthConsumer($request_token['oauth_token'], $request_token['oauth_token_secret']);
+			$request = OAuth\OAuthRequest::from_consumer_and_token($consumer, $token,"POST", $post_url, $args);
+			$request->sign_request(new OAuth\OAuthSignatureMethodHMACSHA1(), $consumer, $token);
+			$url = $request->get_normalized_http_url();
+			parse_str($request->to_postdata(), $post_data);
+			$client = new Guzzle\Http\Client();
+					
+			try 
+			{
+				$request = $client->post($url, false, $post_data);
+        $request->getCurlOptions()->set(CURLOPT_SSL_VERIFYPEER, false);
+				$response = $request->send();
+				$response_data = $response->json();
 			}
+			catch (Guzzle\Http\Exception\BadResponseException $e) 
+			{
+				$err_msg = $e->getResponse();
+			}
+			catch (Guzzle\Http\Exception\CurlException $e) {
+				$err_msg = $e->getError();
+			}
+			catch (Exception $e) {
+				$err_msg = $e->getMessage();
+			}
+			return View::make('twit')
+			->with('err_msg', $err_msg)
+			->with('response', $response_data);
 		}
-		return Redirect::action('UsersController@getThirdParty')
-			->with('err_msg', 'Twitter account could not be deleted.');
+		return Redirect::action('HomeController@showWelcome')
+			->with('err_msg', 'Ooops! You forget to authorize twitter account.');
 	}
 
 }
