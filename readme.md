@@ -18,3 +18,16 @@ Then these values are added credential.php
       'twitter_client_secret' => $_ENV['twitter_client_secret'],
       'twitter_base_url' => 'https://api.twitter.com/oauth/',
     );
+
+## Contact
+
+Follow [@jambura.blog](https://www.facebook.com/jambura.blog) on Facebook 
+
+### Creators
+
+[Zakir Hyder](https://github.com/zakir-hyder)  
+[@jambura.blog](https://www.facebook.com/jambura.blog)
+
+## License
+
+Laravel OAuth Less Than Two is available under the MIT license. See the LICENSE file for more info.    
