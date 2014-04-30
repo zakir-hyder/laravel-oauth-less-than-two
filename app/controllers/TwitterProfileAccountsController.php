@@ -10,7 +10,7 @@ class TwitterProfileAccountsController extends \BaseController {
 
 		$redirect_url = URL::action('TwitterProfileAccountsController@getSaveTwitterProfile');
 		$request_token_url = "https://api.twitter.com/oauth/request_token";
-		$consumer_key  = Config::get('credential.twitter_client_id');
+		$consumer_key  = Config::get('credential.twitter_client_key');
 		$consumer_secret = Config::get('credential.twitter_client_secret');
 		$args = array(
 			'oauth_callback' =>$redirect_url
@@ -64,7 +64,7 @@ class TwitterProfileAccountsController extends \BaseController {
 		if (Session::get('twitter_oauth_token') === Input::get('oauth_token')) 
 		{
 			$access_token_url = 'https://api.twitter.com/oauth/access_token';
-			$consumer_key  = Config::get('credential.twitter_client_id');
+			$consumer_key  = Config::get('credential.twitter_client_key');
 			$consumer_secret = Config::get('credential.twitter_client_secret');
 			$oauth_token  = Session::get('twitter_oauth_token');
 			$oauth_token_secret = Session::get('twitter_oauth_token_secret');
@@ -108,7 +108,7 @@ class TwitterProfileAccountsController extends \BaseController {
 		{
 			$err_msg = $response_data = "";
 			$post_url = 'https://api.twitter.com/1.1/statuses/update.json';
-			$consumer_key  = Config::get('credential.twitter_client_id');
+			$consumer_key  = Config::get('credential.twitter_client_key');
 			$consumer_secret = Config::get('credential.twitter_client_secret');
 			$args['status'] = "#laravel #oauth #Guzzle https://github.com/zakir-hyder/laravel-oauth-less-than-two";
 			$request_token  = Session::get('twitter_request_token');

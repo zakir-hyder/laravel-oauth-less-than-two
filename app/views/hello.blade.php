@@ -46,7 +46,7 @@
       <div class="row">
         <div class="col-md-4">
           <h2>Twitter</h2>
-          <p>After clicking the button you will be redirect to twitter to authrize the app. After you authrize the app, twitter redirect you to back the site with oauth_token i.e. getCreate() function. With that token app will send request to https://api.twitter.com/oauth/access_token and will get oauth_token & oauth_token_secret. Then getCreate() function will forwar the request to getTwit(). getTwit() will post status to your twitter profile.</p>
+          <p>After clicking the button you will be redirect to twitter to authorise the app. After you authorise the app, twitter redirect you to back the site with oauth_token i.e. getCreate() function. With that token app will send request to https://api.twitter.com/oauth/access_token and will get oauth_token & oauth_token_secret. Then getCreate() function will forward the request to getTwit(). getTwit() will post status to your twitter profile.</p>
           <p><a class="btn btn-default" href="{{ action('TwitterProfileAccountsController@getCreate') }}" role="button">Click here To Auth & Tweet &raquo;</a>&nbsp;<a class="btn btn-default" href="{{ action('TwitterProfileAccountsController@getTwit') }}" role="button">Click here To Tweet &raquo;</a></p>
         </div>
       </div>
