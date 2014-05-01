@@ -74,8 +74,8 @@ class TwitterProfileAccountsController extends \BaseController {
 			$token = new OAuth\OAuthConsumer($oauth_token, $oauth_token_secret);
 			$request = OAuth\OAuthRequest::from_consumer_and_token($consumer, $token,"GET", $access_token_url, $args);
 			$request->sign_request(new OAuth\OAuthSignatureMethodHMACSHA1(), $consumer, $token);
-
 			$url = $request->to_url();
+			
 			$client = new Guzzle\Http\Client($url, array(
 				'request.options' => array(
 					'verify' => false
