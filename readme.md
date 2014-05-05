@@ -20,7 +20,7 @@ Then these values are added credential.php
     );
 
 ###Twitter
-Checkout this post for how the app is posting on Twitter.     
+Checkout this post http://blog.jambura.com/2014/05/01/implement-twitter-oauth-1-0a-in-laravel-using-oauth-1-lib/ for how the app is posting on Twitter.     
 
 ## Contact
 
